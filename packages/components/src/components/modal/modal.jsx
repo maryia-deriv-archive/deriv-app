@@ -35,11 +35,13 @@ const ModalElement = ({
     width,
     renderTitle,
     small,
+    real_account_signup_target,
 }) => {
     const el_ref = React.useRef(document.createElement('div'));
     const el_portal_node = document.getElementById(portalId);
     const modal_root_ref = React.useRef(el_portal_node || document.getElementById('modal_root'));
     const wrapper_ref = React.useRef();
+    const maltainvest_signup = real_account_signup_target === 'maltainvest';
 
     const portal_elements_selector = [
         '.dc-datepicker__picker',
@@ -88,7 +90,7 @@ const ModalElement = ({
             id={id}
             className={classNames('dc-modal__container', {
                 [`dc-modal__container_${className}`]: className,
-                'dc-modal__container--risk-message': is_risk_warning_visible,
+                'dc-modal__container--risk-message': is_risk_warning_visible && !maltainvest_signup,
                 'dc-modal__container--small': small,
                 'dc-modal__container--is-vertical-centered': is_vertical_centered,
                 'dc-modal__container--is-vertical-bottom': is_vertical_bottom,
@@ -212,6 +214,7 @@ const Modal = ({
     toggleModal,
     width,
     elements_to_ignore,
+    real_account_signup_target,
 }) => (
     <CSSTransition
         appear
@@ -252,6 +255,7 @@ const Modal = ({
             small={small}
             width={width}
             elements_to_ignore={elements_to_ignore}
+            real_account_signup_target={real_account_signup_target}
         >
             {children}
         </ModalElement>

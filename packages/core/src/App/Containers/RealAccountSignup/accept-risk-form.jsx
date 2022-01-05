@@ -12,12 +12,14 @@ import { localize, Localize } from '@deriv/translations';
 import { isDesktop, isMobile } from '@deriv/shared';
 
 const AcceptRiskForm = ({ is_target_account_mf = false, onSubmit, onClose = null }) => {
+    const form_class_name = is_target_account_mf ? 'accept-risk__form accept-risk__form__mf' : 'accept-risk__form';
+
     return (
         <Formik initialValues={{}} onSubmit={onSubmit} validateOnMount>
             {({ handleSubmit }) => (
                 <AutoHeightWrapper default_height={200}>
                     {({ setRef, height }) => (
-                        <form ref={setRef} onSubmit={handleSubmit} className='accept-risk__form'>
+                        <form ref={setRef} onSubmit={handleSubmit} className={form_class_name}>
                             <Div100vhContainer className='details-form' height_offset='40px' is_disabled={isDesktop()}>
                                 <ThemedScrollbars autoHide={!(window.innerHeight < 890)} height={height - 77}>
                                     <div className='accept-risk__container'>
