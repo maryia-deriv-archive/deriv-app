@@ -25,6 +25,7 @@ const ModalElement = ({
     is_vertical_centered,
     is_vertical_bottom,
     is_vertical_top,
+    is_target_account_mf,
     is_title_centered,
     header,
     header_backgound_color,
@@ -35,13 +36,11 @@ const ModalElement = ({
     width,
     renderTitle,
     small,
-    real_account_signup_target,
 }) => {
     const el_ref = React.useRef(document.createElement('div'));
     const el_portal_node = document.getElementById(portalId);
     const modal_root_ref = React.useRef(el_portal_node || document.getElementById('modal_root'));
     const wrapper_ref = React.useRef();
-    const maltainvest_signup = real_account_signup_target === 'maltainvest';
 
     const portal_elements_selector = [
         '.dc-datepicker__picker',
@@ -90,7 +89,7 @@ const ModalElement = ({
             id={id}
             className={classNames('dc-modal__container', {
                 [`dc-modal__container_${className}`]: className,
-                'dc-modal__container--risk-message': is_risk_warning_visible && !maltainvest_signup,
+                'dc-modal__container--risk-message': is_risk_warning_visible && !is_target_account_mf,
                 'dc-modal__container--small': small,
                 'dc-modal__container--is-vertical-centered': is_vertical_centered,
                 'dc-modal__container--is-vertical-bottom': is_vertical_bottom,
@@ -175,6 +174,7 @@ ModalElement.propTypes = {
     header: PropTypes.node,
     id: PropTypes.string,
     is_open: PropTypes.bool,
+    is_target_account_mf: PropTypes.bool,
     is_title_centered: PropTypes.bool,
     onMount: PropTypes.func,
     onUnmount: PropTypes.func,
@@ -207,6 +207,7 @@ const Modal = ({
     is_vertical_bottom,
     is_vertical_centered,
     is_vertical_top,
+    is_target_account_mf,
     is_title_centered,
     renderTitle,
     should_header_stick_body,
@@ -214,7 +215,6 @@ const Modal = ({
     toggleModal,
     width,
     elements_to_ignore,
-    real_account_signup_target,
 }) => (
     <CSSTransition
         appear
@@ -243,6 +243,7 @@ const Modal = ({
             is_vertical_bottom={is_vertical_bottom}
             is_vertical_centered={is_vertical_centered}
             is_vertical_top={is_vertical_top}
+            is_target_account_mf={is_target_account_mf}
             is_title_centered={is_title_centered}
             title={title}
             toggleModal={toggleModal}
@@ -255,7 +256,6 @@ const Modal = ({
             small={small}
             width={width}
             elements_to_ignore={elements_to_ignore}
-            real_account_signup_target={real_account_signup_target}
         >
             {children}
         </ModalElement>
@@ -285,6 +285,7 @@ Modal.propTypes = {
     is_vertical_bottom: PropTypes.bool,
     is_vertical_centered: PropTypes.bool,
     is_vertical_top: PropTypes.bool,
+    is_target_account_mf: PropTypes.bool,
     is_title_centered: PropTypes.bool,
     onEntered: PropTypes.func,
     onExited: PropTypes.func,

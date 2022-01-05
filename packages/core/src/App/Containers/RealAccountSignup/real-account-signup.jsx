@@ -410,7 +410,7 @@ const RealAccountSignup = ({
                     })}
                     is_open={is_real_acc_signup_on}
                     is_risk_warning_visible={is_risk_warning_visible}
-                    real_account_signup_target={real_account_signup_target}
+                    is_target_account_mf={real_account_signup_target === 'maltainvest'}
                     has_close_icon={real_account_signup_target !== 'samoa'}
                     is_title_centered={real_account_signup_target === 'samoa'}
                     renderTitle={() => {
