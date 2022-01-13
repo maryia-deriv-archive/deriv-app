@@ -164,10 +164,9 @@ export default class NotificationStore extends BaseStore {
     }
 
     @action.bound
-    handleClientNotifications() {
+    handleAccountNotifications() {
         const {
             accounts,
-            account_settings,
             account_status,
             is_eu,
             landing_company_shortcode,
@@ -179,13 +178,10 @@ export default class NotificationStore extends BaseStore {
             isAccountOfType,
             loginid,
         } = this.root_store.client;
-        const { is_p2p_visible } = this.root_store.modules.cashier.general_store;
         const { is_10k_withdrawal_limit_reached } = this.root_store.modules.cashier.withdraw;
         const { current_language, selected_contract_type } = this.root_store.common;
         const malta_account = landing_company_shortcode === 'maltainvest';
         const virtual_account = landing_company_shortcode === 'virtual';
-
-        let has_missing_required_field;
 
         const {
             authentication: { document, identity, needs_verification },
@@ -195,8 +191,7 @@ export default class NotificationStore extends BaseStore {
 
         const hidden_close_account_notification =
             parseInt(localStorage.getItem('hide_close_mx_mlt_account_notification')) === 1;
-        const { cashier_locked, withdrawal_locked, deposit_locked, mt5_withdrawal_locked, document_needs_action } =
-            getStatusValidations(status || []);
+        const { cashier_locked, deposit_locked, document_needs_action } = getStatusValidations(status || []);
 
         if (loginid !== LocalStore.get('active_loginid')) return;
 
@@ -218,19 +213,12 @@ export default class NotificationStore extends BaseStore {
                 is_virtual,
                 no_residence,
                 documents_expired,
-                unwelcome_status,
-                no_withdrawal_or_trading_status,
-                withdrawal_locked_status,
-                cashier_locked_status,
                 FinancialAssessmentRequired,
                 SelfExclusion,
                 ASK_CURRENCY,
                 ASK_AUTHENTICATE,
                 ASK_FINANCIAL_RISK_APPROVAL,
                 ASK_TIN_INFORMATION,
-                ASK_SELF_EXCLUSION_MAX_TURNOVER_SET,
-                ASK_FIX_DETAILS,
-                ASK_UK_FUNDS_PROTECTION,
             } = cashier_validation ? getCashierValidations(cashier_validation) : {};
 
             this.addVerificationNotifications(identity, document);
@@ -241,32 +229,90 @@ export default class NotificationStore extends BaseStore {
 
             if (needs_poa) this.addNotificationMessage(this.client_notifications.needs_poa);
             if (needs_poi) this.addNotificationMessage(this.client_notifications.needs_poi);
+            if (!system_maintenance) {
+                if (cashier_locked) {
+                    if (is_virtual) {
+                        this.addNotificationMessage(this.client_notifications.is_virtual);
+                    } else if (no_residence) {
+                        this.addNotificationMessage(this.client_notifications.no_residence);
+                    } else if (documents_expired) {
+                        this.addNotificationMessage(this.client_notifications.documents_expired);
+                    } else if (ASK_CURRENCY) {
+                        this.addNotificationMessage(this.client_notifications.currency);
+                    } else if (ASK_AUTHENTICATE && is_identity_verification_needed) {
+                        this.addNotificationMessage(this.client_notifications.identity);
+                    } else if (ASK_AUTHENTICATE) {
+                        this.addNotificationMessage(this.client_notifications.authenticate);
+                    } else if (isAccountOfType('financial') && ASK_FINANCIAL_RISK_APPROVAL) {
+                        this.addNotificationMessage(this.client_notifications.ask_financial_risk_approval);
+                    } else if (FinancialAssessmentRequired) {
+                        this.addNotificationMessage(this.client_notifications.risk);
+                    } else if (isAccountOfType('financial') && ASK_TIN_INFORMATION) {
+                        this.addNotificationMessage(this.client_notifications.tax);
+                    }
+                } else {
+                    if (deposit_locked && SelfExclusion) {
+                        this.addNotificationMessage(this.client_notifications.self_exclusion(client.excluded_until));
+                    }
+                    if (is_identity_verification_needed) {
+                        this.addNotificationMessage(this.client_notifications.identity);
+                    }
+                }
+            }
+            if (document_needs_action) this.addNotificationMessage(this.client_notifications.document_needs_action);
+
+            if (is_tnc_needed) {
+                this.addNotificationMessage(this.client_notifications.tnc);
+            }
+        }
+
+        if (!is_eu && isMultiplierContract(selected_contract_type) && current_language === 'EN' && is_logged_in) {
+            this.addNotificationMessage(this.client_notifications.deriv_go);
+        } else {
+            this.removeNotificationMessageByKey({ key: this.client_notifications.deriv_go.key });
+        }
+    }
+
+    @action.bound
+    handleCashierNotifications() {
+        const { accounts, account_settings, account_status, isAccountOfType, loginid } = this.root_store.client;
+        const { is_p2p_visible } = this.root_store.modules.cashier.general_store;
+
+        let has_missing_required_field;
+
+        const { status, cashier_validation } = account_status;
+
+        const { cashier_locked, withdrawal_locked, deposit_locked, mt5_withdrawal_locked } = getStatusValidations(
+            status || []
+        );
+
+        if (loginid !== LocalStore.get('active_loginid')) return;
+
+        const client = accounts[loginid];
+        if (client && !client.is_virtual) {
+            if (isEmptyObject(account_status)) return;
+            if (loginid !== LocalStore.get('active_loginid')) return;
+
+            const {
+                system_maintenance,
+                unwelcome_status,
+                no_withdrawal_or_trading_status,
+                withdrawal_locked_status,
+                cashier_locked_status,
+                ASK_AUTHENTICATE,
+                ASK_SELF_EXCLUSION_MAX_TURNOVER_SET,
+                ASK_FIX_DETAILS,
+                ASK_UK_FUNDS_PROTECTION,
+            } = cashier_validation ? getCashierValidations(cashier_validation) : {};
+
             if (system_maintenance) {
                 this.setClientNotifications(client);
                 this.addNotificationMessage(
                     this.client_notifications.system_maintenance(withdrawal_locked, deposit_locked)
                 );
             } else if (cashier_locked) {
-                if (is_virtual) {
-                    this.addNotificationMessage(this.client_notifications.is_virtual);
-                } else if (no_residence) {
-                    this.addNotificationMessage(this.client_notifications.no_residence);
-                } else if (documents_expired) {
-                    this.addNotificationMessage(this.client_notifications.documents_expired);
-                } else if (cashier_locked_status) {
+                if (cashier_locked_status) {
                     this.addNotificationMessage(this.client_notifications.cashier_locked);
-                } else if (ASK_CURRENCY) {
-                    this.addNotificationMessage(this.client_notifications.currency);
-                } else if (ASK_AUTHENTICATE && is_identity_verification_needed) {
-                    this.addNotificationMessage(this.client_notifications.identity);
-                } else if (ASK_AUTHENTICATE) {
-                    this.addNotificationMessage(this.client_notifications.authenticate);
-                } else if (isAccountOfType('financial') && ASK_FINANCIAL_RISK_APPROVAL) {
-                    this.addNotificationMessage(this.client_notifications.ask_financial_risk_approval);
-                } else if (FinancialAssessmentRequired) {
-                    this.addNotificationMessage(this.client_notifications.risk);
-                } else if (isAccountOfType('financial') && ASK_TIN_INFORMATION) {
-                    this.addNotificationMessage(this.client_notifications.tax);
                 } else if (ASK_UK_FUNDS_PROTECTION) {
                     this.addNotificationMessage(this.client_notifications.ask_uk_funds_protection);
                 } else if (ASK_SELF_EXCLUSION_MAX_TURNOVER_SET) {
@@ -290,25 +336,15 @@ export default class NotificationStore extends BaseStore {
                         this.client_notifications.required_fields(withdrawal_locked, deposit_locked)
                     );
                 }
-                if (deposit_locked && SelfExclusion) {
-                    this.addNotificationMessage(this.client_notifications.self_exclusion(client.excluded_until));
-                } else if (deposit_locked && unwelcome_status) {
+                if (deposit_locked && unwelcome_status) {
                     this.addNotificationMessage(this.client_notifications.unwelcome);
-                }
-                if (is_identity_verification_needed) {
-                    this.addNotificationMessage(this.client_notifications.identity);
                 }
             }
             if (mt5_withdrawal_locked) this.addNotificationMessage(this.client_notifications.mt5_withdrawal_locked);
-            if (document_needs_action) this.addNotificationMessage(this.client_notifications.document_needs_action);
             if (is_p2p_visible) {
                 this.addNotificationMessage(this.client_notifications.dp2p);
             } else {
                 this.removeNotificationMessageByKey({ key: this.client_notifications.dp2p.key });
-            }
-
-            if (is_tnc_needed) {
-                this.addNotificationMessage(this.client_notifications.tnc);
             }
 
             has_missing_required_field = hasMissingRequiredField(account_settings, client, isAccountOfType);
@@ -318,12 +354,12 @@ export default class NotificationStore extends BaseStore {
                 );
             }
         }
+    }
 
-        if (!is_eu && isMultiplierContract(selected_contract_type) && current_language === 'EN' && is_logged_in) {
-            this.addNotificationMessage(this.client_notifications.deriv_go);
-        } else {
-            this.removeNotificationMessageByKey({ key: this.client_notifications.deriv_go.key });
-        }
+    @action.bound
+    handleClientNotifications() {
+        this.handleAccountNotifications();
+        this.handleCashierNotifications();
         this.setShouldShowPopups(true);
     }
 
