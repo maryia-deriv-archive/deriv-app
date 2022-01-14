@@ -229,34 +229,32 @@ export default class NotificationStore extends BaseStore {
 
             if (needs_poa) this.addNotificationMessage(this.client_notifications.needs_poa);
             if (needs_poi) this.addNotificationMessage(this.client_notifications.needs_poi);
-            if (!system_maintenance) {
-                if (cashier_locked) {
-                    if (is_virtual) {
-                        this.addNotificationMessage(this.client_notifications.is_virtual);
-                    } else if (no_residence) {
-                        this.addNotificationMessage(this.client_notifications.no_residence);
-                    } else if (documents_expired) {
-                        this.addNotificationMessage(this.client_notifications.documents_expired);
-                    } else if (ASK_CURRENCY) {
-                        this.addNotificationMessage(this.client_notifications.currency);
-                    } else if (ASK_AUTHENTICATE && is_identity_verification_needed) {
-                        this.addNotificationMessage(this.client_notifications.identity);
-                    } else if (ASK_AUTHENTICATE) {
-                        this.addNotificationMessage(this.client_notifications.authenticate);
-                    } else if (isAccountOfType('financial') && ASK_FINANCIAL_RISK_APPROVAL) {
-                        this.addNotificationMessage(this.client_notifications.ask_financial_risk_approval);
-                    } else if (FinancialAssessmentRequired) {
-                        this.addNotificationMessage(this.client_notifications.risk);
-                    } else if (isAccountOfType('financial') && ASK_TIN_INFORMATION) {
-                        this.addNotificationMessage(this.client_notifications.tax);
-                    }
-                } else {
-                    if (deposit_locked && SelfExclusion) {
-                        this.addNotificationMessage(this.client_notifications.self_exclusion(client.excluded_until));
-                    }
-                    if (is_identity_verification_needed) {
-                        this.addNotificationMessage(this.client_notifications.identity);
-                    }
+            if (cashier_locked && !system_maintenance) {
+                if (is_virtual) {
+                    this.addNotificationMessage(this.client_notifications.is_virtual);
+                } else if (no_residence) {
+                    this.addNotificationMessage(this.client_notifications.no_residence);
+                } else if (documents_expired) {
+                    this.addNotificationMessage(this.client_notifications.documents_expired);
+                } else if (ASK_CURRENCY) {
+                    this.addNotificationMessage(this.client_notifications.currency);
+                } else if (ASK_AUTHENTICATE && is_identity_verification_needed) {
+                    this.addNotificationMessage(this.client_notifications.identity);
+                } else if (ASK_AUTHENTICATE) {
+                    this.addNotificationMessage(this.client_notifications.authenticate);
+                } else if (isAccountOfType('financial') && ASK_FINANCIAL_RISK_APPROVAL) {
+                    this.addNotificationMessage(this.client_notifications.ask_financial_risk_approval);
+                } else if (FinancialAssessmentRequired) {
+                    this.addNotificationMessage(this.client_notifications.risk);
+                } else if (isAccountOfType('financial') && ASK_TIN_INFORMATION) {
+                    this.addNotificationMessage(this.client_notifications.tax);
+                }
+            } else {
+                if (deposit_locked && SelfExclusion) {
+                    this.addNotificationMessage(this.client_notifications.self_exclusion(client.excluded_until));
+                }
+                if (is_identity_verification_needed) {
+                    this.addNotificationMessage(this.client_notifications.identity);
                 }
             }
             if (document_needs_action) this.addNotificationMessage(this.client_notifications.document_needs_action);
@@ -303,6 +301,7 @@ export default class NotificationStore extends BaseStore {
                 ASK_SELF_EXCLUSION_MAX_TURNOVER_SET,
                 ASK_FIX_DETAILS,
                 ASK_UK_FUNDS_PROTECTION,
+                SelfExclusion,
             } = cashier_validation ? getCashierValidations(cashier_validation) : {};
 
             if (system_maintenance) {
@@ -336,7 +335,7 @@ export default class NotificationStore extends BaseStore {
                         this.client_notifications.required_fields(withdrawal_locked, deposit_locked)
                     );
                 }
-                if (deposit_locked && unwelcome_status) {
+                if (deposit_locked && unwelcome_status && !SelfExclusion) {
                     this.addNotificationMessage(this.client_notifications.unwelcome);
                 }
             }
